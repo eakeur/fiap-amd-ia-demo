@@ -1,4 +1,4 @@
-# Lab | Exemplo - Desenhe um Número
+# Escrevendo Números, Treinando Máquinas: Laboratório Interativo com MNIST
 
 ## Requisitos
 Para executar este laboratório, é aconselhável ter o Python na versão **3.12 ou superior** instalado no sistema.
