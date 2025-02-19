@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Desenhe um Número</title>
+    <style>
+        body {
+
+            background: rgb(0, 0, 0);
+            background: linear-gradient(40deg, rgba(0, 0, 0, 1) 0%, rgba(73, 73, 73, 1) 100%);
+        }
+
+        html {
+            height: 100vh;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        #canvas {
+            border: 1px solid #000;
+        }
+
+        .container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .canvas-container {
+            width: 300px;
+            height: 300px;
+            background-color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.5s ease;
+        }
+
+        .canvas-container:hover {
+            background-color: rgba(237, 20, 91, 1);
+        }
+
+        .btn-container {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .btn-limpar,
+        .btn-enviar {
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-limpar {
+            background-color: rgba(237, 20, 91, 1);
+        }
+
+        .btn-enviar {
+            background-color: rgba(0, 162, 255, 1);
+        }
+
+        .btn-limpar:hover {
+            background-color: rgba(237, 20, 91, 0.8);
+        }
+
+        .btn-enviar:hover {
+            background-color: rgba(0, 162, 255, 0.8);
+        }
+
+        #status {
+            margin-top: 15px;
+            font-family: Arial, sans-serif;
+            color: springgreen;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="canvas-container">
+            <canvas id="canvas" width="280" height="280"></canvas>
+        </div>
+        <div class="btn-container">
+            <button class="btn-limpar" onclick="limparCanvas()">Limpar</button>
+            <button class="btn-enviar" onclick="enviarImagem()">Enviar Imagem</button>
+        </div>
+        <div id="status"></div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let desenhando = false;
+        let pos = { x: 0, y: 0 };
+
+        ctx.fillStyle = "black";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.lineWidth = 15;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = 'white';
+
+        canvas.addEventListener('mousedown', e => {
+            desenhando = true;
+            pos = { x: e.offsetX, y: e.offsetY };
+        });
+        canvas.addEventListener('mouseup', e => desenhando = false);
+        canvas.addEventListener('mousemove', e => {
+            if (!desenhando) return;
+            const novaPos = { x: e.offsetX, y: e.offsetY };
+            desenharLinha(pos.x, pos.y, novaPos.x, novaPos.y);
+            pos = novaPos;
+        });
+
+        canvas.addEventListener('touchstart', e => {
+            e.preventDefault();
+            desenhando = true;
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            pos = { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+        });
+        canvas.addEventListener('touchend', e => desenhando = false);
+        canvas.addEventListener('touchmove', e => {
+            e.preventDefault();
+            if (!desenhando) return;
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const novaPos = { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+            desenharLinha(pos.x, pos.y, novaPos.x, novaPos.y);
+            pos = novaPos;
+        });
+
+        function desenharLinha(x1, y1, x2, y2) {
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+        }
+
+        function limparCanvas() {
+            ctx.fillStyle = "black";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            document.getElementById('status').innerHTML = "";
+        }
+
+        function enviarImagem() {
+            canvas.toBlob(function (blob) {
+                const formData = new FormData();
+                formData.append("file", blob, "desenho.png");
+
+                fetch("http://localhost:8000/upload", {
+                    method: "POST",
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log("Upload concluído:", data);
+
+                        if (data.file_id) {
+                            abrirConexaoSSE(data.file_id);
+                        } else {
+                            console.error("Erro: file_id não recebido na resposta");
+                        }
+                    })
+                    .catch(err => console.error("Erro no upload:", err));
+            }, "image/png");
+        }
+
+        function abrirConexaoSSE(fileId) {
+            const eventSource = new EventSource(`http://localhost:8001/status/${fileId}`);
+
+            eventSource.onmessage = function (event) {
+                const statusDiv = document.getElementById('status');
+                statusDiv.innerHTML += event.data + "<br>";
+
+                if (event.data.startsWith("RESULT:")) {
+                    eventSource.close();
+                }
+            };
+
+            eventSource.onerror = function (error) {
+                console.error("Erro na conexão SSE:", error);
+                eventSource.close();
+            };
+        }
+
+    </script>
+</body>
+
+</html>
