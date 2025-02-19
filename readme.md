@@ -168,7 +168,7 @@ O MinIO precisará ser reiniciado, clique em **Restart** e aguarde. Após o tér
 
 1. No painel do MinIO, clique em **Buckets** no menu lateral.
 2. Clique no bucket `raw-images`.  
-3. No menu lateral do bucket selecione **Events**:  
+3. No menu lateral do bucket selecione **Events**.
 4. Clique em **Subscribe to Event**.
 
 ![image](https://github.com/user-attachments/assets/f08a887b-e4e9-4d30-b1be-4749eef1b433)
@@ -184,3 +184,12 @@ O MinIO precisará ser reiniciado, clique em **Restart** e aguarde. Após o tér
 Com essa configuração, qualquer arquivo com a extenção png inserido no bucket deverá emitir o evento.
 
 ![image](https://github.com/user-attachments/assets/cd88af96-3359-4589-89d5-bf37db777ec9)
+
+### Gerar Access Keys
+
+1. No painel do MinIO, clique em **Access Keys** no menu lateral.
+2. Clique em **Create access key**.  
+3. Copie os valores de `Access Key` e `Secret Key` e substitua o arquivo `.env` com os valores.  
+4. Clique em **Create**.
+
+![image](https://github.com/user-attachments/assets/94158fe5-523d-429f-94b0-093db93b0564)
